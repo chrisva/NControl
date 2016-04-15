@@ -26,6 +26,7 @@
  ************************************************************************/
 
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using NGraphics;
 using Xamarin.Forms;
@@ -37,15 +38,6 @@ namespace NControl.Abstractions
 	/// </summary>
     public class NControlView: ContentView
 	{
-        #region Private Members
-
-        /// <summary>
-        /// The color of the background.
-        /// </summary>
-        private Xamarin.Forms.Color _backgroundColor;
-
-        #endregion
-
         #region Events
 
         /// <summary>
@@ -82,8 +74,7 @@ namespace NControl.Abstractions
 		/// </summary>
 		public NControlView()
 		{
-			base.BackgroundColor = Xamarin.Forms.Color.Transparent;
-            BackgroundColor = Xamarin.Forms.Color.Transparent;
+			BackgroundColor = Xamarin.Forms.Color.Transparent;
 		}
 
 		/// <summary>
@@ -104,24 +95,7 @@ namespace NControl.Abstractions
 	    /// Gets the drawing function.
 	    /// </summary>
 	    /// <value>The drawing function.</value>	    
-	    public Action<ICanvas, Rect> DrawingFunction { get; set; }
-
-        /// <summary>
-        /// Gets or sets the color which will fill the background of a VisualElement. This is a bindable property.
-        /// </summary>
-        /// <value>The color of the background.</value>
-        public new Xamarin.Forms.Color BackgroundColor
-        {
-            get
-            {
-                return _backgroundColor;
-            }
-            set
-            {
-                _backgroundColor = value;
-                Invalidate();
-            }
-        }
+	    public Action<ICanvas, Rect> DrawingFunction { get; set; }       
 
 		#endregion
 
@@ -142,10 +116,6 @@ namespace NControl.Abstractions
 		/// <param name="canvas">Canvas.</param>
         public virtual void Draw(ICanvas canvas, Rect rect)
 		{
-            if(_backgroundColor != Xamarin.Forms.Color.Transparent)
-                canvas.FillRectangle(rect, new NGraphics.Color(
-                    _backgroundColor.R, _backgroundColor.G, _backgroundColor.B));
-            
             if (DrawingFunction != null)
                 DrawingFunction(canvas, rect);
 		}

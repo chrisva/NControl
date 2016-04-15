@@ -1,8 +1,8 @@
-﻿using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
+﻿using Windows.Foundation;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 
-namespace NControl.WP81
+namespace NControl.WindowsStore
 {
     public class NControlNativeView : Grid
     {

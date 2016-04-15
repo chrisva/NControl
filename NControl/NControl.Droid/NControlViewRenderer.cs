@@ -38,15 +38,19 @@ using Xamarin.Forms.Platform.Android;
 [assembly: ExportRenderer(typeof(NControlView), typeof(NControlViewRenderer))]
 namespace NControl.Droid
 {
-	/// <summary>
-	/// NControlView renderer.
-	/// </summary>
-    public class NControlViewRenderer: VisualElementRenderer<NControlView>
-	{
+    /// <summary>
+    /// NControlView renderer.
+    /// </summary>
+    [Preserve(AllMembers = true)]
+    public class NControlViewRenderer : VisualElementRenderer<NControlView>
+    {
         /// <summary>
-		/// Used for registration with dependency service
-		/// </summary>
-		public static void Init() { }
+        /// Used for registration with dependency service
+        /// </summary>
+        public static void Init ()
+        {
+            var temp = DateTime.Now;
+        }
 
         /// <summary>
         /// Raises the element changed event.
@@ -61,6 +65,35 @@ namespace NControl.Droid
 
             if (e.NewElement != null)
                 e.NewElement.OnInvalidate += HandleInvalidate;
+
+            // Lets have a clear background
+            this.SetBackgroundColor (Android.Graphics.Color.Transparent);
+
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Override to avoid setting the background to a given color
+        /// </summary>
+        protected override void UpdateBackgroundColor()
+        {
+            // Do NOT call update background here.
+            // base.UpdateBackgroundColor();
+        }
+
+        /// <summary>
+        /// Raises the element property changed event.
+        /// </summary>
+        /// <param name="sender">Sender.</param>
+        /// <param name="e">E.</param>
+        protected override void OnElementPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            base.OnElementPropertyChanged(sender, e);
+
+            if (e.PropertyName == NControlView.BackgroundColorProperty.PropertyName)
+                Element.Invalidate();
+            else if (e.PropertyName == NControlView.IsVisibleProperty.PropertyName)
+                Element.Invalidate();
         }
 
         #region Native Drawing 
@@ -70,20 +103,40 @@ namespace NControl.Droid
         /// Draw the specified canvas.
         /// </summary>
         /// <param name="canvas">Canvas.</param>
-        public override void Draw (Android.Graphics.Canvas canvas)
+        public override void Draw(Android.Graphics.Canvas canvas)
         {
-            // Should we clip?
-            if(Element != null && Element.IsClippedToBounds)
-                canvas.ClipRect(new Android.Graphics.Rect(0, 0, Width, Height), Region.Op.Replace);
+            if (Element == null)
+            {               
+                base.Draw(canvas);
+                return;
+            }
 
-            // Perform custom drawing
-			var ncanvas = new CanvasCanvas(canvas);
-            Element.Draw(ncanvas, new NGraphics.Rect(0, 0, Width, Height));
+            // Draws the background and default android setup. Children will also be redrawn here
+            // base.Draw(canvas);
 
-            // Draw elements/children etc.
-            base.Draw (canvas);
+            // Set up clipping
+            if (Element.IsClippedToBounds)
+                canvas.ClipRect(new Android.Graphics.Rect(0, 0, Width, Height));
 
+            // Perform custom drawing from the NGraphics subsystems
+            var ncanvas = new CanvasCanvas(canvas);
+
+            var rect = new NGraphics.Rect(0, 0, Width, Height);
+
+            // Fill background 
+            ncanvas.FillRectangle(rect, new NGraphics.Color(Element.BackgroundColor.R, Element.BackgroundColor.G, Element.BackgroundColor.B, Element.BackgroundColor.A));
+
+            // Custom drawing
+            Element.Draw(ncanvas, rect);
+
+            // Redraw children - since we might have a composite control containing both children 
+            // and custom drawing code, we want children to be drawn last. The reason for this double-
+            // drawing is that the base.Draw(canvas) call will handle background which is needed before
+            // doing NGraphics drawing - but unfortunately it also draws children - which then will 
+            // be drawn below NGraphics drawings.
+            base.Draw(canvas);
         }
+
         #endregion
 
         #region Touch Handling
@@ -99,43 +152,38 @@ namespace NControl.Droid
         /// <param name="e">E.</param>
         public override bool OnTouchEvent(MotionEvent e)
         {
-            var touchInfo = new NGraphics.Point[]{ 
-                new NGraphics.Point{X = ConvertPixelsToDp(e.GetX()), Y = ConvertPixelsToDp(e.GetY())}
+            var scale = Element.Width / Width;
+
+            var touchInfo = new[]{
+                new NGraphics.Point(e.GetX() * scale, e.GetY() * scale)
             };
 
             var result = false;
 
-            
+            // Handle touch actions
+            switch (e.Action)
             {
-                // Handle touch actions
-                switch (e.Action)
-                {
-
-                    case MotionEventActions.Down:
-					if (Element != null)
+                case MotionEventActions.Down:
+                    if (Element != null)
                         result = Element.TouchesBegan(touchInfo);
-                        break;
+                    break;
 
-                    case MotionEventActions.Move:
-					if (Element != null)
+                case MotionEventActions.Move:
+                    if (Element != null)
                         result = Element.TouchesMoved(touchInfo);
-                        break;
+                    break;
 
-                    case MotionEventActions.Up:
-					if (Element != null)
+                case MotionEventActions.Up:
+                    if (Element != null)
                         result = Element.TouchesEnded(touchInfo);
-                        break;          
+                    break;
 
-                    case MotionEventActions.Cancel:
-					if (Element != null)
+                case MotionEventActions.Cancel:
+                    if (Element != null)
                         result = Element.TouchesCancelled(touchInfo);
-                        break;
-                }
+                    break;
             }
-
-			System.Diagnostics.Debug.WriteLine("OnTouchEvent: " + e.Action.ToString() + 
-				" for " + Element.GetType().Name + " returning " + result);
-
+                    
             return result;
         }
 
@@ -157,26 +205,12 @@ namespace NControl.Droid
         /// Gets the size of the screen.
         /// </summary>
         /// <returns>The screen size.</returns>
-        protected Xamarin.Forms.Size GetScreenSize ()
-        {           
-            var metrics = Forms.Context.Resources.DisplayMetrics;
-            var widthInDp = ConvertPixelsToDp(metrics.WidthPixels);
-            var heightInDp = ConvertPixelsToDp(metrics.HeightPixels);
-
-            return new Xamarin.Forms.Size (widthInDp, heightInDp);
-        }
-
-        /// <summary>
-        /// Converts the pixels to dp.
-        /// </summary>
-        /// <returns>The pixels to dp.</returns>
-        /// <param name="pixelValue">Pixel value.</param>
-        private int ConvertPixelsToDp(float pixelValue)
+        protected Xamarin.Forms.Size GetScreenSize()
         {
-            var dp = (int) ((pixelValue) / Forms.Context.Resources.DisplayMetrics.Density);
-            return dp;
+            var metrics = Forms.Context.Resources.DisplayMetrics;
+            return new Xamarin.Forms.Size(metrics.WidthPixels, metrics.HeightPixels);
         }
         #endregion
-	}
+    }
 }
 

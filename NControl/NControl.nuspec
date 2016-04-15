@@ -2,19 +2,19 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
    <metadata minClientVersion="2.8.1">
        <id>NControl</id>
-    <version>0.5.6</version>
-    <authors>Christian Falch</authors>
+    <version>0.8.6</version>
+    <authors>Christian Falch, Henrik Ilgen, Adam (awolf), BlueRaja, Frank Neuman</authors>
     <owners>Christian Falch</owners>
     <licenseUrl>https://github.com/chrfalch/NControl/blob/master/LICENSE.md</licenseUrl>
     <projectUrl>https://github.com/chrfalch/NControl/</projectUrl>    
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>NControl is a Xamarin.Forms wrapper control built around the NGraphics library enabling developers to create custom controls without the need for custom renderers.</description>
-    <releaseNotes>Released for iOS, Android and Windows Phone Silverlight 8.1.</releaseNotes>
+    <releaseNotes>Released for iOS, Android, Windows Phone Silverlight 8.1 and Windows Store.</releaseNotes>
     <copyright>Copyright 2015</copyright>
     <tags>xamarin, pcl, xam.pcl, android, xamarin.forms, ios</tags>
        <dependencies>
-         <dependency id="Xamarin.Forms" version="1.4.2.6355" />
-         <dependency id="NGraphics" version="0.2.2" />
+         <dependency id="Xamarin.Forms" version="2.0.1.6505" />
+         <dependency id="NGraphics" version="0.4.0" />
        </dependencies>
    </metadata>
    <files>
@@ -26,13 +26,17 @@
 
      <file src="NControl.Droid/bin/Release/NControl.dll" target="lib\MonoAndroid10\NControl.dll" />
 
-     <!--Xamarin.WP80-->
+     <!--Xamarin.WP80 -->
     <file src="NControl.WP80/Bin/Release/NControl.WP80.dll" target="lib\wp80\NControl.WP80.dll" />
     <file src="NControl.WP80/Bin/Release/NControl.dll" target="lib\wp80\NControl.dll" />
 
-     <!--Xamarin.WP81-->
+     <!--Xamarin.WP81 -->
      <file src="NControl.WP81/Bin/Release/NControl.WP81.dll" target="lib\wp81\NControl.WP81.dll" />
      <file src="NControl.WP81/Bin/Release/NControl.dll" target="lib\wp81\NControl.dll" />
+
+     <!--Xamarin.WIN81 -->
+     <file src="NControl.WindowsStore/Bin/Release/NControl.WindowsStore.dll" target="lib\win81\NControl.WindowsStore.dll" />
+     <file src="NControl.WindowsStore/Bin/Release/NControl.dll" target="lib\win81\NControl.dll" />
 
     <!--Xamarin.iOSUnified-->
      <file src="NControl.iOS/bin/Release/NControl.iOS.dll" target="lib\Xamarin.iOS10\NControl.iOS.dll" />

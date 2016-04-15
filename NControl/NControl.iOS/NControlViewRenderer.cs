@@ -33,6 +33,8 @@ using NGraphics;
 using UIKit;
 using Xamarin.Forms;
 using Xamarin.Forms.Platform.iOS;
+using Foundation;
+using System;
 
 [assembly: ExportRenderer(typeof(NControlView), typeof(NControlViewRenderer))]
 namespace NControl.iOS
@@ -40,12 +42,21 @@ namespace NControl.iOS
 	/// <summary>
 	/// NControlView renderer.
 	/// </summary>
+    [Preserve(AllMembers = true)]
     public class NControlViewRenderer: VisualElementRenderer<NControlView>
 	{
+        /// <summary>
+        /// The gesture recognizer.
+        /// </summary>
+        private UITouchesGestureRecognizer _gestureRecognizer;
+
 		/// <summary>
 		/// Used for registration with dependency service
 		/// </summary>
-		public new static void Init() { }
+		public new static void Init()
+        {
+            var temp = DateTime.Now;
+        }
 
         /// <summary>
         /// Raises the element changed event.
@@ -56,11 +67,27 @@ namespace NControl.iOS
             base.OnElementChanged(e);
 
             if (e.OldElement != null)
+            {
+                if (null != _gestureRecognizer)
+                {
+                    RemoveGestureRecognizer(_gestureRecognizer);
+                    _gestureRecognizer = null;
+                }
+
                 e.OldElement.OnInvalidate -= HandleInvalidate;
+            }
 
             if (e.NewElement != null)
             {
-                e.NewElement.OnInvalidate += HandleInvalidate;                
+                e.NewElement.OnInvalidate += HandleInvalidate;
+
+                if ((null == _gestureRecognizer) && (null != NativeView))
+                {
+                    _gestureRecognizer = new UITouchesGestureRecognizer(e.NewElement, NativeView);
+                    NativeView.AddGestureRecognizer(_gestureRecognizer);
+                }
+
+                e.NewElement.Invalidate();
             }
         }
 
@@ -75,8 +102,12 @@ namespace NControl.iOS
 
             if (e.PropertyName == NControlView.IsClippedToBoundsProperty.PropertyName)
                 Layer.MasksToBounds = Element.IsClippedToBounds;
+            else if (e.PropertyName == NControlView.BackgroundColorProperty.PropertyName)
+                Element.Invalidate();
+            else if(e.PropertyName == NControlView.IsVisibleProperty.PropertyName)
+                Element.Invalidate();
         }
-        		
+
         #region Drawing
 
         /// <summary>
@@ -95,91 +126,30 @@ namespace NControl.iOS
 
                 var canvas = new CGContextCanvas (context);
                 Element.Draw (canvas, new NGraphics.Rect(rect.Left, rect.Top, rect.Width, rect.Height));
-            }        
+            }
         }
         #endregion
 
         #region Touch Handlers
 
-        /// <summary>
-        /// Handles touches began
-        /// </summary>
-        /// <param name="touches">Touches.</param>
-        /// <param name="evt">Evt.</param>
         public override void TouchesBegan(Foundation.NSSet touches, UIEvent evt)
         {
-            base.TouchesBegan(touches, evt);
-
-			if (Element == null) // || ((UITouch)evt.AllTouches.FirstOrDefault()).View != this.NativeView)
-                return;
-
-			var touch = (UITouch)evt.AllTouches.AnyObject;
-			var p = touch.LocationInView (this);
-			System.Diagnostics.Debug.WriteLine ("TouchesBegan for " + Element.GetType ().Name + " (" + p.ToString() + ") on " + 
-				(touch as UITouch).View.DebugDescription);
-
-            var touchList = touches.ToArray<UITouch>();
-
-            Element.TouchesBegan (touchList.Select(t => new NGraphics.Point{
-				X = (float)t.LocationInView(this).X, Y = (float)t.LocationInView(this).Y
-            }));
+            // Ignore buggy Xamarin touch events on iOS
         }
 
-        /// <summary>
-        /// Handles touches moved
-        /// </summary>
-        /// <param name="touches">Touches.</param>
-        /// <param name="evt">Evt.</param>
-        public override void TouchesMoved(Foundation.NSSet touches, UIEvent evt)
-        {
-            base.TouchesMoved(touches, evt);
-
-			if (Element == null) // || ((UITouch)evt.AllTouches.FirstOrDefault()).View != this.NativeView)
-                return;
-
-            var touchList = touches.ToArray<UITouch>();
-
-            Element.TouchesMoved (touchList.Select(t => new NGraphics.Point{
-				X = (float)t.LocationInView(this).X, Y = (float)t.LocationInView(this).Y
-            }));
-        }
-
-        /// <summary>
-        /// Touches ended
-        /// </summary>
-        /// <param name="touches">Touches.</param>
-        /// <param name="evt">Evt.</param>
         public override void TouchesEnded(Foundation.NSSet touches, UIEvent evt)
         {
-            base.TouchesEnded(touches, evt);
-
-			if (Element == null) // || ((UITouch)evt.AllTouches.FirstOrDefault()).View != this.NativeView)
-                return;
-
-            var touchList = touches.ToArray<UITouch>();
-
-            Element.TouchesEnded (touchList.Select(t => new NGraphics.Point{
-				X = (float)t.LocationInView(this).X, Y = (float)t.LocationInView(this).Y
-            }));
+            // Ignore buggy Xamarin touch events on iOS
         }
 
-        /// <summary>
-        /// Handles touches cancelled
-        /// </summary>
-        /// <param name="touches">Touches.</param>
-        /// <param name="evt">Evt.</param>
         public override void TouchesCancelled(Foundation.NSSet touches, UIEvent evt)
         {
-            base.TouchesCancelled(touches, evt);
+            // Ignore buggy Xamarin touch events on iOS
+        }
 
-			if (Element == null) // || ((UITouch)evt.AllTouches.FirstOrDefault()).View != this.NativeView)
-                return;
-
-            var touchList = touches.ToArray<UITouch>();
-
-            Element.TouchesCancelled (touchList.Select(t => new NGraphics.Point{
-				X = (float)t.LocationInView(this).X, Y = (float)t.LocationInView(this).Y
-            }));
+        public override void TouchesMoved(Foundation.NSSet touches, UIEvent evt)
+        {
+            // Ignore buggy Xamarin touch events on iOS
         }
 
         #endregion
